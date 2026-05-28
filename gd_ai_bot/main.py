@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 
 from .ai_agent import AiRunner
+from .calibrator import Calibrator, TestAddress
 from .config import load_config
 from .input_controller import InputController
 from .memory_reader import MemoryReader
@@ -37,6 +38,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("state", help="Connect and print one RAM state snapshot.")
 
+    calibrate_parser = subparsers.add_parser("calibrate", help="Manually verify configured RAM addresses.")
+    calibrate_parser.add_argument(
+        "--watch",
+        choices=("player_x", "player_y", "speed", "on_ground", "level_percent", "player_mode"),
+        help="Highlight one field while printing all calibration values.",
+    )
+    calibrate_parser.add_argument(
+        "--test-address",
+        nargs=3,
+        metavar=("FIELD", "ADDRESS", "TYPE"),
+        help="Temporarily test FIELD at ADDRESS as TYPE without editing config.json.",
+    )
+
     record_parser = subparsers.add_parser("record", help="Record jump presses to a route JSON file.")
     record_parser.add_argument("--output", default=None, help="Route output path.")
     record_parser.add_argument("--duration", type=float, default=None, help="Optional recording duration in seconds.")
@@ -65,6 +79,12 @@ def main() -> int:
     if args.command == "state":
         state = memory_reader.read_state()
         print(state)
+    elif args.command == "calibrate":
+        test_address = None
+        if args.test_address:
+            field, address, value_type = args.test_address
+            test_address = TestAddress(field=field, address=address, value_type=value_type.lower())
+        Calibrator(config, memory_reader, watch_field=args.watch, test_address=test_address).run()
     elif args.command == "record":
         output = args.output or config.get("recording.default_route", "routes/default_route.json")
         RouteRecorder(config, memory_reader).record(output, duration_seconds=args.duration)

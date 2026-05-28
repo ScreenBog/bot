@@ -25,9 +25,10 @@
 ```text
 gd_ai_bot/
   __init__.py
-  main.py              # CLI: state / record / replay / ai
+  main.py              # CLI: state / calibrate / record / replay / ai
   memory_reader.py     # подключение к процессу и чтение настроенных адресов
   input_controller.py  # WinAPI / keyboard / pyautogui ввод
+  calibrator.py        # ручная проверка RAM-адресов без сканирования памяти
   recorder.py          # запись нажатий игрока в route JSON
   replay.py            # воспроизведение route JSON
   ai_agent.py          # эвристический агент и runner
@@ -63,6 +64,12 @@ pip install -r requirements.txt
 
 ```powershell
 python -m gd_ai_bot.main state
+```
+
+Запустить ручную проверку RAM-адресов из `config.json`:
+
+```powershell
+python -m gd_ai_bot.main calibrate
 ```
 
 Записать маршрут до нажатия `Esc`:
@@ -150,6 +157,89 @@ python -m gd_ai_bot.main state
 ```
 
 Если поле остается `0`/`False`, проверьте версию игры, тип значения, размер pointer (`memory.pointer_size`) и offsets.
+
+
+## Calibrate: ручная проверка RAM-адресов
+
+Режим `calibrate` помогает быстро проверить адреса из `gd_ai_bot/config.json` или временный адрес без редактирования файла. Он не сканирует память автоматически и не обходит античиты: бот читает только явно указанные адреса. Используйте режим только локально и офлайн.
+
+Запуск с текущими адресами из `config.json`:
+
+```powershell
+python -m gd_ai_bot.main calibrate
+```
+
+Команда каждые `0.1` секунды выводит:
+
+- `player_x`;
+- `player_y`;
+- `speed`;
+- `on_ground`;
+- `level_percent`;
+- `player_mode`.
+
+Поля без адреса показываются как `UNSET`, чтобы было сразу видно, что еще не настроено. Остановить режим можно через `Ctrl+C`.
+
+Подсветить одно поле, например `player_x`:
+
+```powershell
+python -m gd_ai_bot.main calibrate --watch player_x
+```
+
+Быстро проверить адрес без изменения `config.json`:
+
+```powershell
+python -m gd_ai_bot.main calibrate --test-address player_x 0x12345678 float
+```
+
+Формат команды:
+
+```powershell
+python -m gd_ai_bot.main calibrate --test-address FIELD ADDRESS TYPE
+```
+
+Где:
+
+- `FIELD` — одно из `player_x`, `player_y`, `speed`, `on_ground`, `level_percent`, `player_mode`;
+- `ADDRESS` — адрес, например `0x12345678`;
+- `TYPE` — один из `float`, `double`, `int`, `uint`, `bool`, `byte`.
+
+### Как понять, что адрес правильный
+
+Во время проверки запустите уровень в одиночном/офлайн-режиме и наблюдайте значения:
+
+- `player_x` должен плавно расти по мере движения игрока вправо;
+- `player_y` должен заметно меняться при прыжках, падении и движении по платформам;
+- `speed` должен быть числом, которое меняется при порталах скорости или изменениях физики;
+- `on_ground` должен переключаться между `True/False` или `1/0` при прыжке и приземлении;
+- `level_percent` должен расти от `0` к `100` по мере прохождения уровня;
+- `player_mode` может меняться при прохождении порталов cube/ship/ball/ufo/wave/robot/spider, если адрес найден верно для вашей версии игры.
+
+Если значение всегда `0`, хаотично скачет, не связано с действием в игре или меняется только в меню, вероятно адрес или тип выбран неверно. Проверьте тип (`float` против `int`/`bool`), версию игры, pointer size и offsets.
+
+### Как перенести найденный адрес в `config.json`
+
+Если временная проверка показала корректное значение, перенесите адрес в соответствующее поле `gd_ai_bot/config.json`. Например, команда:
+
+```powershell
+python -m gd_ai_bot.main calibrate --test-address player_x 0x12345678 float
+```
+
+соответствует такой настройке:
+
+```json
+"player_x": {
+  "base": "0x12345678",
+  "offsets": [],
+  "type": "float"
+}
+```
+
+После сохранения файла проверьте уже постоянную настройку:
+
+```powershell
+python -m gd_ai_bot.main calibrate --watch player_x
+```
 
 ## Record / Replay
 
