@@ -1,0 +1,83 @@
+{
+  "safety": {
+    "offline_only": true,
+    "emergency_stop_key": "esc"
+  },
+  "process": {
+    "name": "GeometryDash.exe"
+  },
+  "memory": {
+    "enabled": true,
+    "poll_interval_seconds": 0.01,
+    "module_name": "GeometryDash.exe",
+    "pointer_size": 4,
+    "addresses": {
+      "player_x": {
+        "base": null,
+        "offsets": [],
+        "type": "float",
+        "description": "Player X coordinate. Replace null with a static address or module-relative RVA."
+      },
+      "player_y": {
+        "base": null,
+        "offsets": [],
+        "type": "float",
+        "description": "Player Y coordinate. Replace null with a static address or module-relative RVA."
+      },
+      "speed": {
+        "base": null,
+        "offsets": [],
+        "type": "float",
+        "description": "Current horizontal speed."
+      },
+      "on_ground": {
+        "base": null,
+        "offsets": [],
+        "type": "bool",
+        "description": "True when the player can jump."
+      },
+      "level_percent": {
+        "base": null,
+        "offsets": [],
+        "type": "float",
+        "description": "Current level completion percent from 0 to 100."
+      },
+      "player_mode": {
+        "base": null,
+        "offsets": [],
+        "type": "int",
+        "description": "Mode ID if known: cube/ship/ball/ufo/wave/robot/spider may differ by version."
+      }
+    }
+  },
+  "input": {
+    "backend": "winapi",
+    "jump_button": "space",
+    "mouse_button": "left",
+    "minimum_press_seconds": 0.025,
+    "minimum_gap_seconds": 0.015
+  },
+  "recording": {
+    "route_dir": "routes",
+    "default_route": "routes/default_route.json",
+    "coordinate_source": "percent",
+    "event_keys": ["space", "left_mouse"]
+  },
+  "replay": {
+    "timing_tolerance": 0.02,
+    "coordinate_tolerance": 0.15
+  },
+  "ai": {
+    "enabled": false,
+    "decision_interval_seconds": 0.01,
+    "jump_cooldown_seconds": 0.09,
+    "heuristic": {
+      "jump_every_x_units": 130.0,
+      "min_x_for_auto_jump": 20.0
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/gd_ai_bot_errors.log"
+  }
+}
